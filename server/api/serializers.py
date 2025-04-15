@@ -1,53 +1,36 @@
 from rest_framework import serializers
-from .models import Category, Post, Author, Admin, Comments, Moderator
+from django.contrib.auth import get_user_model
+from .models import Post, Comment
 
-class CategorySerializer(serializers.ModelSerializer):
+User = get_user_model()
+
+class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
-        model = Category
-        fields = '__all__'
+        model = User
+        fields = ('id', 'username', 'email', 'password', 'age', 'role', 'bio')
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'author', 'post', 'content', 'create_date')
+        read_only_fields = ('author', 'create_date')
 
 class PostSerializer(serializers.ModelSerializer):
+    author = UserSerializer(read_only=True)
+    moderator = UserSerializer(read_only=True)
+    comments = CommentSerializer(many=True, read_only=True)
+
     class Meta:
         model = Post
-        fields = '__all__'
-
-class SignupSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
-    confirm_password = serializers.CharField(write_only=True)
-    
-    class Meta:
-        model = Author
-        fields = ['author_name', 'email', 'password', 'confirm_password']
-    
-    def validate(self, data):
-        # Check if passwords match
-        if data['password'] != data['confirm_password']:
-            raise serializers.ValidationError("Passwords do not match")
-        
-        # Check if email is already in use
-        if Author.objects.filter(email=data['email']).exists():
-            raise serializers.ValidationError("Email is already in use")
-        
-        return data
-
-class AuthorSerializer(serializers.ModelSerializer):
-    posts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    
-    class Meta:
-        model = Author
-        fields = ['author_id', 'author_name', 'email', 'posts']  # Excluding password for security
-
-class AdminSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Admin
-        fields = ['admin_id', 'name', 'username']  # Excluding password for security
-
-class ModeratorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Moderator
-        fields = ['moderator_id', 'name', 'username', 'email', 'is_active']  # Excluding password for security
-
-class CommentsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comments
-        fields = '__all__'
+        fields = ('id', 'title', 'author', 'content', 'moderated', 'create_date', 
+                 'moderator', 'like_count', 'comments')
+        read_only_fields = ('author', 'moderator', 'create_date', 'like_count') 
