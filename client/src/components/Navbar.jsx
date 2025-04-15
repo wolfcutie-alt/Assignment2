@@ -124,7 +124,7 @@ const Navbar = () => {
           <NavLinks>
             {user ? (
               <>
-                <NavLink to="/forum" $isActive={isActive('/forum')}>
+                <NavLink to="/" $isActive={isActive('/forum')}>
                   Forum
                 </NavLink>
                 {isModeratorOrAdmin ? (

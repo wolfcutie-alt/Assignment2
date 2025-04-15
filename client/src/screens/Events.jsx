@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Card, CardContent, Typography, Container, Grid } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import Navbar from '../components/Navbar';
 
 const EventCard = styled(Card)(({ theme }) => ({
   display: 'flex',
@@ -60,6 +61,8 @@ const events = [
 
 const Events = () => {
   return (
+    <>
+        <Navbar />
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
         Upcoming Events
@@ -102,6 +105,7 @@ const Events = () => {
         ))}
       </Grid>
     </Container>
+    </>
   );
 };
 
