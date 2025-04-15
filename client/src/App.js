@@ -4,10 +4,10 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./screens/Login";
 import Home from "./screens/Home";
 import Profile from "./screens/Profile";
-import Navbar from "./components/Navbar";
 import Signup from "./screens/Signup";
 import Posts from "./screens/Posts";
 import Events from "./screens/Events";
+import Message from './screens/Message'
 
 // Protected Route component
 const PrivateRoute = ({ children }) => {
@@ -67,6 +67,15 @@ function App() {
                 element={
                   <PrivateRoute>
                     <Events />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="/message"
+                element={
+                  <PrivateRoute>
+                    <Message />
                   </PrivateRoute>
                 }
               />

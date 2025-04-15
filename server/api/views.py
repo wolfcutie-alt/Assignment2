@@ -33,15 +33,31 @@ class PostViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
     def get_queryset(self):
-        user = self.request.user
-        if user.is_staff:
+        # Check if this is a moderation-specific request
+        is_moderation_request = self.request.path.endswith('/moderate/') or self.request.path.endswith('/unmoderated/')
+        
+        # For moderation endpoints, show all posts to staff/moderators
+        if is_moderation_request and (self.request.user.is_staff or self.request.user.role == 'moderator'):
             return Post.objects.all()
-        return Post.objects.filter(author=user)
+            
+        # For regular views (like home screen), only show moderated posts for everyone
+        return Post.objects.filter(moderated=True)
+
+    @action(detail=False, methods=['get'])
+    def unmoderated(self, request):
+        if request.user.role != 'moderator' and request.user.role != 'admin':
+            return Response(
+                {'error': 'Only moderators can view unmoderated posts'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        unmoderated_posts = Post.objects.filter(moderated=False)
+        serializer = self.get_serializer(unmoderated_posts, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def moderate(self, request, pk=None):
         post = self.get_object()
-        if not request.user.groups.filter(name='Moderators').exists():
+        if request.user.role != 'moderator' and request.user.role != 'admin':
             return Response(
                 {'error': 'Only moderators can moderate posts'},
                 status=status.HTTP_403_FORBIDDEN

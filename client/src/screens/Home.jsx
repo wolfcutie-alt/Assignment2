@@ -330,8 +330,6 @@ const Home = () => {
                 <span>{user?.role || 'Student'}</span>
               </div>
             </ProfileInfo>
-            
-            <EditProfileButton>Edit Profile</EditProfileButton>
           </ProfileSection>
         </aside>
 

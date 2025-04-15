@@ -104,6 +104,17 @@ export const postService = {
       throw error;
     }
   },
+  getUnmoderatedPosts: async () => {
+    try {
+      const response = await api.get('/posts/unmoderated/');
+      return response.data;
+    } catch (error) {
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+      }
+      throw error;
+    }
+  },
   getPost: async (id) => {
     const response = await api.get(`/posts/${id}/`);
     return response.data;

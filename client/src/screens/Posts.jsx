@@ -166,7 +166,7 @@ const Posts = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('pending');
   
   // Check if user is moderator or admin
   const isModerator = user?.role === 'moderator' || user?.role === 'admin';
@@ -184,7 +184,7 @@ const Posts = () => {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const fetchedPosts = await postService.getAllPosts();
+      const fetchedPosts = await postService.getUnmoderatedPosts();
       setPosts(fetchedPosts);
     } catch (err) {
       console.error('Error fetching posts:', err);
@@ -197,22 +197,20 @@ const Posts = () => {
   const handleModeratePost = async (postId, action) => {
     try {
       await postService.moderatePost(postId, action);
-      // Refresh posts after moderation
+      // Refresh the list of unmoderated posts
       fetchPosts();
     } catch (err) {
-      console.error(`Error ${action}ing post:`, err);
-      setError(`Failed to ${action} post. Please try again.`);
+      console.error('Error moderating post:', err);
+      setError('Failed to moderate post. Please try again.');
     }
   };
   
-  const filteredPosts = posts.filter(post => {
-    if (filter === 'all') return true;
-    return post.status === filter;
-  });
-  
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
   
   if (loading) {
@@ -226,93 +224,63 @@ const Posts = () => {
     );
   }
   
+  if (error) {
+    return (
+      <Container>
+        <Navbar />
+        <MainContent>
+          <div style={{ color: 'red' }}>{error}</div>
+        </MainContent>
+      </Container>
+    );
+  }
+  
   return (
     <Container>
       <Navbar />
       <MainContent>
         <Header>
-          <Title>Post Moderation</Title>
+          <Title>Posts Awaiting Moderation</Title>
         </Header>
         
-        <FilterContainer>
-          <FilterButton 
-            active={filter === 'all'} 
-            onClick={() => setFilter('all')}
-          >
-            All Posts
-          </FilterButton>
-          <FilterButton 
-            active={filter === 'pending'} 
-            onClick={() => setFilter('pending')}
-          >
-            Pending
-          </FilterButton>
-          <FilterButton 
-            active={filter === 'approved'} 
-            onClick={() => setFilter('approved')}
-          >
-            Approved
-          </FilterButton>
-          <FilterButton 
-            active={filter === 'rejected'} 
-            onClick={() => setFilter('rejected')}
-          >
-            Rejected
-          </FilterButton>
-        </FilterContainer>
-        
-        {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
-        
-        {filteredPosts.length === 0 ? (
+        {posts.length === 0 ? (
           <NoPostsMessage>
-            <p>No posts found with the selected filter.</p>
+            <p>No posts waiting for moderation!</p>
           </NoPostsMessage>
         ) : (
-          filteredPosts.map(post => (
+          posts.map((post) => (
             <PostCard key={post.id}>
               <PostHeader>
                 <PostTitle>{post.title}</PostTitle>
-                <StatusBadge className={post.status || 'pending'}>
-                  {post.status ? post.status.charAt(0).toUpperCase() + post.status.slice(1) : 'Pending'}
-                </StatusBadge>
+                <PostMeta>
+                  <span>By {post.author?.username}</span>
+                  <span>•</span>
+                  <span>{formatDate(post.created_at)}</span>
+                </PostMeta>
               </PostHeader>
-              
-              <PostMeta>
-                <span>By: {post.author?.username || 'Unknown'}</span>
-                <span>Posted: {formatDate(post.created_at)}</span>
-              </PostMeta>
-              
-              <PostContent>
-                {post.content.length > 200 
-                  ? `${post.content.substring(0, 200)}...` 
-                  : post.content}
-              </PostContent>
-              
+              <PostContent>{post.content}</PostContent>
+              {post.image && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <img 
+                    src={post.image} 
+                    alt="Post content" 
+                    style={{ maxWidth: '100%', borderRadius: '4px' }} 
+                  />
+                </div>
+              )}
               <PostActions>
                 <ActionButton 
-                  className="view"
-                  onClick={() => navigate(`/post/${post.id}`)}
+                  className="approve"
+                  onClick={() => handleModeratePost(post.id, 'approve')}
                 >
-                  View Full Post
+                  Approve
                 </ActionButton>
-                
-                {post.status !== 'approved' && (
-                  <ActionButton 
-                    className="approve"
-                    onClick={() => handleModeratePost(post.id, 'approve')}
-                  >
-                    Approve
-                  </ActionButton>
-                )}
-                
-                {post.status !== 'rejected' && (
-                  <ActionButton 
-                    className="reject"
-                    onClick={() => handleModeratePost(post.id, 'reject')}
-                  >
-                    Reject
-                  </ActionButton>
-                )}
+                <ActionButton 
+                  className="reject"
+                  onClick={() => handleModeratePost(post.id, 'reject')}
+                >
+                  Reject
+                </ActionButton>
               </PostActions>
             </PostCard>
           ))
