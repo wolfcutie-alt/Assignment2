@@ -8,6 +8,7 @@ import Signup from "./screens/Signup";
 import Posts from "./screens/Posts";
 import Events from "./screens/Events";
 import Message from './screens/Message'
+import Announcements from './screens/Announcements'
 
 // Protected Route component
 const PrivateRoute = ({ children }) => {
@@ -76,6 +77,15 @@ function App() {
                 element={
                   <PrivateRoute>
                     <Message />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="/announcements"
+                element={
+                  <PrivateRoute>
+                    <Announcements />
                   </PrivateRoute>
                 }
               />

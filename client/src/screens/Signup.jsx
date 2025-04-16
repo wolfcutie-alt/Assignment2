@@ -115,6 +115,7 @@ const Signup = () => {
     email: '',
     password: '',
     confirm_password: '',
+    age: ''
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -139,7 +140,15 @@ const Signup = () => {
     }
 
     try {
-      await register(formData);
+      const formDataToSend = new FormData();
+      
+      // Add all form fields to FormData
+      formDataToSend.append('username', formData.username);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('password', formData.password);
+      formDataToSend.append('age', formData.age);
+      
+      await register(formDataToSend);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to create account. Please try again.');
@@ -171,6 +180,16 @@ const Signup = () => {
           placeholder="Email Address"
           value={formData.email}
           onChange={handleChange}
+          required
+        />
+        <Input
+          type="number"
+          name="age"
+          placeholder="Age"
+          value={formData.age}
+          onChange={handleChange}
+          min="1"
+          max="120"
           required
         />
         <Input

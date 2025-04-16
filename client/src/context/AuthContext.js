@@ -33,8 +33,22 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userData) => {
+    // Register the user
     await authService.register(userData);
-    return login(userData.username, userData.password);
+    
+    // Extract username and password from FormData
+    let username, password;
+    
+    if (userData instanceof FormData) {
+      username = userData.get('username');
+      password = userData.get('password');
+    } else {
+      username = userData.username;
+      password = userData.password;
+    }
+    
+    // Login with the extracted credentials
+    return login(username, password);
   };
 
   const logout = () => {

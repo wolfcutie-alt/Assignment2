@@ -46,7 +46,17 @@ export const authService = {
     }
   },
   register: async (userData) => {
-    const response = await api.post('/users/', userData);
+    // Check if userData is FormData
+    const isFormData = userData instanceof FormData;
+    
+    // Configure the request based on the data type
+    const config = isFormData ? {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    } : {};
+    
+    const response = await api.post('/users/', userData, config);
     return response.data;
   },
   logout: () => {

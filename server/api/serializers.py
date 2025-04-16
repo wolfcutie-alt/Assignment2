@@ -5,16 +5,36 @@ from .models import Post, Comment
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=False)
+    image = serializers.ImageField(required=False, source='profile_image')
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'password', 'age', 'role', 'bio')
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ('id', 'username', 'email', 'password', 'age', 'role', 'bio', 'profile_image', 'image', 'date_joined')
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'date_joined': {'read_only': True}
+        }
 
     def create(self, validated_data):
+        # Remove image from validated_data if it exists
+        image = validated_data.pop('image', None)
+        
+        # Create user
         user = User.objects.create_user(**validated_data)
+        
+        # Set profile image if provided
+        if image:
+            user.profile_image = image
+            user.save()
+            
         return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        if password:
+            instance.set_password(password)
+        return super().update(instance, validated_data)
 
 class CommentSerializer(serializers.ModelSerializer):
     author = UserSerializer(read_only=True)

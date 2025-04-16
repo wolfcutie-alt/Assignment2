@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
-import { userService } from '../services/api';
+import { userService, authService } from '../services/api';
 import Navbar from '../components/Navbar';
 
 const Container = styled.div`
@@ -251,11 +251,18 @@ const Profile = () => {
       if (formData.profile_image) formDataToSend.append('profile_image', formData.profile_image);
       
       await userService.updateProfile(formDataToSend);
+      
+      // Refresh user data using authService
+      const updatedUser = await authService.getCurrentUser();
+      // Update the user in context
+      if (typeof user.updateUser === 'function') {
+        user.updateUser(updatedUser);
+      }
+      
       setIsEditing(false);
-      // Refresh user data in context
-      // This would typically be handled by your auth context
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to update profile. Please try again.');
+      console.error('Profile update error:', err);
     } finally {
       setIsLoading(false);
     }
